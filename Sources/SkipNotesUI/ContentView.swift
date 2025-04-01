@@ -1,16 +1,22 @@
-import SwiftUI
 import Foundation
-import OSLog
+import SkipFuse
 import SkipKit
 import SkipNotesModel
+#if os(Android)
+import SkipFuseUI
+#else
+import SwiftUI
+#endif
 
 fileprivate let logger: Logger = Logger(subsystem: "skip.app.notes", category: "SkipNotes")
 
+// SKIP @bridge
 public struct ContentView: View {
     @State var viewModel = ViewModel.shared
     @State var appearance = ""
     @State var showSettings = false
 
+    // SKIP @bridge
     public init() {
     }
 
@@ -91,8 +97,11 @@ struct SettingsView : View {
                         Text("Encrypt")
                         Spacer()
                         if viewModel.crypting {
+                            // TODO: SkipFuseUI needs a native ProgressView bridge
+                            #if !os(Android)
                             ProgressView()
                                 .progressViewStyle(.circular)
+                            #endif
                         }
                     }
                 }
@@ -108,7 +117,9 @@ struct SettingsView : View {
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
                        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
                         Text("Version \(version) (\(buildNumber))")
+                            #if !os(Android) // otherwise crash
                             .foregroundStyle(.gray)
+                            #endif
                     }
                     Text("Powered by [Skip](https://skip.tools)")
                 }
@@ -141,7 +152,10 @@ struct ItemView : View {
                 .textFieldStyle(.roundedBorder)
             Toggle("Favorite", isOn: $item.favorite)
             DatePicker("Date", selection: $item.date)
-            Text("Notes").font(.title3)
+            Text("Notes")
+                #if !os(Android) // otherwise crash
+                .font(.title3)
+                #endif
             TextEditor(text: $item.notes)
                 .focused($focusField, equals: .notes)
                 .border(Color.secondary, width: 1.0)
